@@ -70,6 +70,7 @@ private slots:
     void on_Button_retangle_clicked();
     void on_Button_circle_clicked();
     void on_Button_polygon_clicked();
+    void on_DeletePoint_clicked();
 };
 
 #endif // MAINWINDOW_H

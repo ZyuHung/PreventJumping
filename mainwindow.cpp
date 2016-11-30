@@ -446,6 +446,7 @@ void MainWindow::on_Button_retangle_clicked()
         m_pointEnd.setY(0);
         setDecetion(false);
     }
+    ui->DeletePoint->setEnabled(false);
     rectType=RETANGLE;
 }
 
@@ -459,6 +460,7 @@ void MainWindow::on_Button_circle_clicked()
         m_pointEnd.setY(0);
         setDecetion(false);
     }
+    ui->DeletePoint->setEnabled(false);
     rectType=CIRCLE;
 }
 
@@ -476,6 +478,13 @@ void MainWindow::on_Button_polygon_clicked()
     setDecetion(false);
     isPolyClosed=false;
     polyPoints.clear();
+    ui->DeletePoint->setEnabled(true);
     rectType=POLYGON;
 
+}
+
+void MainWindow::on_DeletePoint_clicked()
+{
+    if (rectType==POLYGON && !isPolyClosed && !polyPoints.empty())
+        polyPoints.pop_back();
 }
