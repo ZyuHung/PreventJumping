@@ -77,7 +77,7 @@ void MainWindow::closeCamera()
     capture.release();
 }
 
-void MainWindow::paintEvent(QPaintEvent *e)
+void MainWindow::paintEvent(QPaintEvent *event)
 {
     QImage image2 = QImage((uchar*)(CamImg.data), CamImg.cols, CamImg.rows, QImage::Format_RGB888);
     ui->label->setPixmap(QPixmap::fromImage(image2));
@@ -378,6 +378,15 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
         isPolyClosed=true;
     }
     setDecetion(true);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if (event->key()==Qt::Key_Delete)
+    {
+        if (rectType==POLYGON && !isPolyClosed && !polyPoints.empty())
+            polyPoints.pop_back();
+    }
 }
 
 

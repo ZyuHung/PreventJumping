@@ -8,6 +8,7 @@
 #include <QPainter>
 #include <QDebug>
 #include <QMouseEvent>
+#include <QKeyEvent>
 #include <vector>
 
 namespace Ui {
@@ -54,11 +55,12 @@ private:
     cv::Point lineEndPoint;
 
 protected:
-    void paintEvent(QPaintEvent *e);
+    void paintEvent(QPaintEvent *event);
     void mousePressEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent *event);
     void mouseDoubleClickEvent(QMouseEvent *event);
+    void keyPressEvent(QKeyEvent *event);
 
 private slots:
     void on_pushButton_clicked();
