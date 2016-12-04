@@ -2,8 +2,14 @@
 #include "ui_mainwindow.h"
 
 cv::Rect range;
-//cv::BackgroundSubtractorMOG bgSubtractor(5, 10, 0.5, false);
 cv::BackgroundSubtractorMOG2 bgSubtractor;
+
+bool sortbypoints(cv::Point &v1, cv::Point &v2)
+{
+    if (v1.x != v2.x)
+        return v1.x < v2.x;
+    else return v1.y < v2.y;
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -213,7 +219,7 @@ void MainWindow::ProcessImage()
         break;
 
     }
-
+    ForContour.zeros(CamImg.rows,CamImg.cols,CV_8UC3);
     bgSubtractor(rect_range, mask, 0.00005);
 
     threshold(mask, mask, 180, 255, CV_THRESH_BINARY);
@@ -222,21 +228,23 @@ void MainWindow::ProcessImage()
     cv::erode(mask, mask, cv::Mat());
     cv::dilate(mask, mask, cv::Mat());
 
-    int Point_Count = 0;
-    for (int i = 0; i < range.height; i++)
+    mask.copyTo(ForContour);
+
+    cv::findContours(ForContour,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+    cv::drawContours(CamImg,contours,-1,cv::Scalar(0,255,0),3);
+
+    cv::Point tmp=cv::Point(range.x,range.y);
+    if (contours.size())
     {
-        for (int j = 0; j < range.width; j++)
-        {
-            if (mask.at<uchar>(i, j) == 255)
-            {
-                Point_Count++;
-                circle(CamImg, cv::Point(range.x+j, range.y+i), 1, cv::Scalar(0, 0, 255));
-            }
-        }
-    }
-    if (Point_Count) qDebug()<<Point_Count;
+        for (std::vector<std::vector<cv::Point>>::iterator it = contours.begin(); it != contours.end(); ++it)
+            std::sort(it->begin(), it->end(),sortbypoints);
+        cv::rectangle(CamImg,contours[0][0]+tmp, *(contours[0].end()-1)+tmp,cv::Scalar(0,0,255),2);
+//        cv::rectangle(CamImg,contours[0][0]+tmp, contours[0][contours[0].size()-1]+tmp,cv::Scalar(0,0,255),2);
+
     int thresold = range.height*range.width*0.05;
-    if (Point_Count>thresold)
+    int square=(contours[0][contours[0].size()-1].x-contours[0][0].x)
+            *(contours[0][contours[0].size()-1].y-contours[0][0].y);
+    if (square>=thresold)
     {
         setAlarm(true);
     }
@@ -244,12 +252,14 @@ void MainWindow::ProcessImage()
     {
         setAlarm(false);
     }
+    }
 
 }
 
 void MainWindow::playwav()
 {
-    QSound::play(":/alarm/alarming.wav");
+//    QSound::play(":/alarm/alarming.wav");
+    isFirstWav=true;
 }
 
 void MainWindow::setAlarm(bool isAlarm)
@@ -260,7 +270,7 @@ void MainWindow::setAlarm(bool isAlarm)
 
        if (isFirstWav)
        {
-           playwav();
+           QSound::play(":/alarm/alarming.wav");
            wav_timer.start(2350);
            isFirstWav=false;
        }
@@ -269,8 +279,7 @@ void MainWindow::setAlarm(bool isAlarm)
     else
     {
         ui->Alarming->setVisible(false);
-        wav_timer.stop();
-        isFirstWav=true;
+//        wav_timer.stop();
     }
 
 }
@@ -553,3 +562,4 @@ void MainWindow::on_DeletePoint_clicked()
         polyPoints.pop_back();
     }
 }
+

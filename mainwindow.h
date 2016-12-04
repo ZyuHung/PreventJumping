@@ -2,6 +2,9 @@
 #define MAINWINDOW_H
 
 #include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <vector>
+#include <algorithm>
 #include <QMainWindow>
 #include <QTimer>
 #include <QPixmap>
@@ -9,7 +12,6 @@
 #include <QDebug>
 #include <QMouseEvent>
 #include <QKeyEvent>
-#include <vector>
 #include <QSound>
 #include <QString>
 
@@ -31,6 +33,7 @@ public:
     void setRect(const QPoint &start, const QPoint &end);
     void setAlarm(bool isAlarm);
     void playwav();
+//    bool sortbypoints(cv::Point &v1, cv::Point &v2);
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
@@ -51,11 +54,12 @@ private:
     bool isAction=true;
     int rectType=DEFALT;
     QTimer timer;
-    cv::Mat CamImg,mask;
+    cv::Mat CamImg,mask,ForContour;
     cv::VideoCapture capture;
     Ui::MainWindow *ui;
     cv::RotatedRect roRect;
     std::vector<cv::Point> polyPoints;
+    std::vector<std::vector<cv::Point>> contours;
     cv::Point tmp;
     cv::Point lineEndPoint;
 
