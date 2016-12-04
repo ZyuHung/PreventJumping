@@ -13,6 +13,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->Alarming->setVisible(false);
     connect(&timer,&QTimer::timeout,this,&MainWindow::UpdateImage);
+    connect(&wav_timer,&QTimer::timeout,this,&MainWindow::playwav);
 }
 
 
@@ -61,7 +62,7 @@ void MainWindow::pauseCamera()
 void MainWindow::closeCamera()
 {
     timer.stop();
-    setDecetion(false);
+    setDetection(false);
     rectType=DEFALT;
     CamImg.release();
     ui->status->setText(tr("Camera closed."));
@@ -246,15 +247,30 @@ void MainWindow::ProcessImage()
 
 }
 
+void MainWindow::playwav()
+{
+    QSound::play(":/alarm/alarming.wav");
+}
+
 void MainWindow::setAlarm(bool isAlarm)
 {
     if (isAlarm)
     {
         ui->Alarming->setVisible(true);
+
+       if (isFirstWav)
+       {
+           playwav();
+           wav_timer.start(2350);
+           isFirstWav=false;
+       }
+
     }
     else
     {
         ui->Alarming->setVisible(false);
+        wav_timer.stop();
+        isFirstWav=true;
     }
 
 }
@@ -269,7 +285,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     {
     case RETANGLE:
     case CIRCLE:
-        setDecetion(false);
+        setDetection(false);
         if (event->x()-ui->label->x()>=ui->label->width())
             m_pointStart.setX(ui->label->x()+ui->label->width()-15);
         else if(event->x()<ui->label->x())
@@ -290,7 +306,7 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         {
         if (isPolyClosed)
         {
-            setDecetion(false);
+            setDetection(false);
             isPolyClosed=false;
             polyPoints.clear();
         }
@@ -366,7 +382,7 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
     {
     case RETANGLE:
     case CIRCLE:
-        setDecetion(true);
+        setDetection(true);
         break;
     case POLYGON:
         if (event->x()-ui->label->x()>=ui->label->width())
@@ -388,7 +404,8 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
         {
            polyPoints.push_back(tmp);
            isPolyClosed=true;
-           setDecetion(true);
+
+           setDetection(true);
         }
         if (isPress && !isPolyClosed) polyPoints.push_back(tmp);
 
@@ -409,7 +426,7 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
         polyPoints.push_back(tmp);
         isPolyClosed=true;
     }
-    setDecetion(true);
+    setDetection(true);
     }
 }
 
@@ -448,27 +465,27 @@ void MainWindow::on_pushButton_3_clicked()
 
 void MainWindow::on_Button_decetion_clicked()
 {
-    if (ui->Button_decetion->text()=="StartDecetion")
+    if (ui->Button_decetion->text()=="StartDetection")
     {
-        setDecetion(true);
+        setDetection(true);
     }
     else
     {
-        setDecetion(false);
+        setDetection(false);
     }
 }
 
-void MainWindow::setDecetion(bool onoff)
+void MainWindow::setDetection(bool onoff)
 {
     if (onoff)
     {
         decetion=true;
-        ui->Button_decetion->setText(tr("StopDecetion"));
+        ui->Button_decetion->setText(tr("StopDetection"));
     }
     else
     {
         decetion=false;
-        ui->Button_decetion->setText(tr("StartDecetion"));
+        ui->Button_decetion->setText(tr("StartDetection"));
         setAlarm(false);
     }
 }
@@ -483,7 +500,7 @@ void MainWindow::on_Button_retangle_clicked()
         m_pointStart.setY(0);
         m_pointEnd.setX(0);
         m_pointEnd.setY(0);
-        setDecetion(false);
+        setDetection(false);
     }
     ui->DeletePoint->setEnabled(false);
     rectType=RETANGLE;
@@ -500,7 +517,7 @@ void MainWindow::on_Button_circle_clicked()
         m_pointStart.setY(0);
         m_pointEnd.setX(0);
         m_pointEnd.setY(0);
-        setDecetion(false);
+        setDetection(false);
     }
     ui->DeletePoint->setEnabled(false);
     rectType=CIRCLE;
@@ -520,7 +537,7 @@ void MainWindow::on_Button_polygon_clicked()
         m_pointEnd.setY(0);
 
     }
-    setDecetion(false);
+    setDetection(false);
     isPolyClosed=false;
     polyPoints.clear();
     ui->DeletePoint->setEnabled(true);

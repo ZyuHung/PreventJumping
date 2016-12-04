@@ -19,6 +19,7 @@ HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui
 
+QT += multimedia
 
 INCLUDEPATH += T:/opencv/build/include
 

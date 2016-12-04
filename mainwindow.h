@@ -10,6 +10,8 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <vector>
+#include <QSound>
+#include <QString>
 
 namespace Ui {
 class MainWindow;
@@ -25,9 +27,10 @@ public:
     void closeCamera();
     void UpdateImage();
     void ProcessImage();
-    void setDecetion(bool onoff);
+    void setDetection(bool onoff);
     void setRect(const QPoint &start, const QPoint &end);
     void setAlarm(bool isAlarm);
+    void playwav();
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
@@ -37,10 +40,11 @@ private:
 #define POLYGON 3
 #define DEFALT 4
 
-
+    QTimer wav_timer;
     QPoint m_pointStart;
     QPoint m_pointEnd;
     const int CAM_NO=0;
+    bool isFirstWav=true;
     bool decetion=false;
     bool isPress=false;
     bool isPolyClosed=false;
