@@ -10,12 +10,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     qDebug()<<"MainWindow";
-//    rectType=DEFALT;
-//    range.x=0;
-//    range.y=0;
-//    range.width=640;
-//    range.height=300;
     ui->setupUi(this);
+    ui->Alarming->setVisible(false);
     connect(&timer,&QTimer::timeout,this,&MainWindow::UpdateImage);
 }
 
@@ -28,6 +24,7 @@ void MainWindow::showCamera()
         cv::cvtColor(CamImg,CamImg,CV_BGR2RGB);
         ui->status->setText(tr("Camera open."));
         timer.start(30);
+        isAction=true;
         ui->pushButton->setEnabled(false);
         ui->pushButton_2->setEnabled(true);
         ui->pushButton_3->setEnabled(true);
@@ -48,11 +45,13 @@ void MainWindow::pauseCamera()
     {
         ui->pushButton_2->setText(tr("ContinueCamera"));
         ui->status->setText(tr("Pause"));
+        isAction=false;
         timer.stop();
 
     }else
     {
         timer.start(30);
+        isAction=true;
         ui->pushButton_2->setText(tr("PauseCamera"));
         ui->status->setText(tr("Camera open."));
     }
@@ -64,7 +63,7 @@ void MainWindow::closeCamera()
     timer.stop();
     setDecetion(false);
     rectType=DEFALT;
-    ui->label->resize(0,0);
+    CamImg.release();
     ui->status->setText(tr("Camera closed."));
     ui->pushButton->setEnabled(true);
     ui->pushButton_2->setEnabled(false);
@@ -214,8 +213,13 @@ void MainWindow::ProcessImage()
 
     }
 
-    bgSubtractor(rect_range, mask, 0.0005);
+    bgSubtractor(rect_range, mask, 0.00005);
+
     threshold(mask, mask, 180, 255, CV_THRESH_BINARY);
+
+    cv::erode(mask, mask, cv::Mat());
+    cv::erode(mask, mask, cv::Mat());
+    cv::dilate(mask, mask, cv::Mat());
 
     int Point_Count = 0;
     for (int i = 0; i < range.height; i++)
@@ -233,13 +237,33 @@ void MainWindow::ProcessImage()
     int thresold = range.height*range.width*0.05;
     if (Point_Count>thresold)
     {
-        ui->status->setText("Alarming!!!");
+        setAlarm(true);
+    }
+    else
+    {
+        setAlarm(false);
     }
 
 }
 
+void MainWindow::setAlarm(bool isAlarm)
+{
+    if (isAlarm)
+    {
+        ui->Alarming->setVisible(true);
+    }
+    else
+    {
+        ui->Alarming->setVisible(false);
+    }
+
+}
+
+
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {//考虑左右键press问题
+    if (isAction)
+    {
     isPress=false;
     switch (rectType)
     {
@@ -296,10 +320,13 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
     }
 
     qDebug()<<"mousePress"<<m_pointStart;
+    }
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
+    if (isAction)
+    {
     switch (rectType)
     {
     case RETANGLE:
@@ -327,10 +354,13 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
     }
 
     qDebug()<<"width:"<<ui->label->width()<<"minus:"<<event->x()-ui->label->x();
+    }
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
+    if (isAction)
+    {
 
     switch (rectType)
     {
@@ -366,11 +396,13 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
     case DEFALT:
         break;
     }
-
+}
 }
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 {
+    if (isAction)
+    {
     qDebug()<<"DoubleClick";
     if (rectType==POLYGON)
     {
@@ -378,14 +410,18 @@ void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
         isPolyClosed=true;
     }
     setDecetion(true);
+    }
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
+    if (isAction)
+    {
     if (event->key()==Qt::Key_Delete)
     {
         if (rectType==POLYGON && !isPolyClosed && !polyPoints.empty())
             polyPoints.pop_back();
+    }
     }
 }
 
@@ -433,11 +469,14 @@ void MainWindow::setDecetion(bool onoff)
     {
         decetion=false;
         ui->Button_decetion->setText(tr("StartDecetion"));
+        setAlarm(false);
     }
 }
 
 void MainWindow::on_Button_retangle_clicked()
 {
+    if (isAction)
+    {
     if (rectType!=RETANGLE)
     {
         m_pointStart.setX(0);
@@ -448,10 +487,13 @@ void MainWindow::on_Button_retangle_clicked()
     }
     ui->DeletePoint->setEnabled(false);
     rectType=RETANGLE;
+    }
 }
 
 void MainWindow::on_Button_circle_clicked()
 {
+    if (isAction)
+    {
     if (rectType!=CIRCLE)
     {
         m_pointStart.setX(0);
@@ -462,10 +504,13 @@ void MainWindow::on_Button_circle_clicked()
     }
     ui->DeletePoint->setEnabled(false);
     rectType=CIRCLE;
+    }
 }
 
 void MainWindow::on_Button_polygon_clicked()
 {
+    if (isAction)
+    {
     if (rectType!=POLYGON)
     {
 
@@ -480,11 +525,14 @@ void MainWindow::on_Button_polygon_clicked()
     polyPoints.clear();
     ui->DeletePoint->setEnabled(true);
     rectType=POLYGON;
-
+}
 }
 
 void MainWindow::on_DeletePoint_clicked()
 {
+    if (isAction)
+    {
     if (rectType==POLYGON && !isPolyClosed && !polyPoints.empty())
         polyPoints.pop_back();
+    }
 }

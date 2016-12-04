@@ -49,3 +49,6 @@ LIBS += -LT:/opencv/build/x86/vc12/lib \
 -lopencv_legacy2410 \
 -lopencv_flann2410
 }
+
+RESOURCES += \
+    img.qrc

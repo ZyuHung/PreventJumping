@@ -1,0 +1,6 @@
+<RCC>
+    <qresource prefix="/alarm">
+        <file alias="alarm">Alarming.png</file>
+        <file alias="signal">nosignal.png</file>
+    </qresource>
+</RCC>

@@ -27,7 +27,7 @@ public:
     void ProcessImage();
     void setDecetion(bool onoff);
     void setRect(const QPoint &start, const QPoint &end);
-
+    void setAlarm(bool isAlarm);
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
@@ -44,6 +44,7 @@ private:
     bool decetion=false;
     bool isPress=false;
     bool isPolyClosed=false;
+    bool isAction=true;
     int rectType=DEFALT;
     QTimer timer;
     cv::Mat CamImg,mask;

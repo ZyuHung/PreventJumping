@@ -171,6 +171,77 @@
      <string>Delete</string>
     </property>
    </widget>
+   <widget class="QLabel" name="Alarming">
+    <property name="enabled">
+     <bool>true</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>70</x>
+      <y>540</y>
+      <width>591</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="sizePolicy">
+     <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+      <horstretch>0</horstretch>
+      <verstretch>0</verstretch>
+     </sizepolicy>
+    </property>
+    <property name="cursor">
+     <cursorShape>ArrowCursor</cursorShape>
+    </property>
+    <property name="mouseTracking">
+     <bool>false</bool>
+    </property>
+    <property name="autoFillBackground">
+     <bool>false</bool>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap resource="img.qrc">:/alarm/alarm</pixmap>
+    </property>
+    <property name="scaledContents">
+     <bool>false</bool>
+    </property>
+    <property name="wordWrap">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>230</y>
+      <width>351</width>
+      <height>101</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+    <property name="pixmap">
+     <pixmap resource="img.qrc">:/alarm/signal</pixmap>
+    </property>
+    <property name="alignment">
+     <set>Qt::AlignCenter</set>
+    </property>
+   </widget>
+   <zorder>label_2</zorder>
+   <zorder>pushButton</zorder>
+   <zorder>pushButton_2</zorder>
+   <zorder>pushButton_3</zorder>
+   <zorder>status</zorder>
+   <zorder>Button_decetion</zorder>
+   <zorder>Button_retangle</zorder>
+   <zorder>Button_circle</zorder>
+   <zorder>Button_polygon</zorder>
+   <zorder>DeletePoint</zorder>
+   <zorder>Alarming</zorder>
+   <zorder>label</zorder>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <widget class="QMenuBar" name="menuBar">
@@ -185,6 +256,8 @@
   </widget>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="img.qrc"/>
+ </resources>
  <connections/>
 </ui>
