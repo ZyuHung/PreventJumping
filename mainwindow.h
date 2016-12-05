@@ -1,3 +1,16 @@
+/*****************************************************************************
+* Copyright (c) 2016 GZHU_EENB_LAB629 Corporation
+* All Rights Reserved.
+*
+* Project Name         :   PreventJumping
+* File Name            :   mainwindow.h
+*
+* Create Date          :   2016/11/28
+* Author               :   Zhu Zhihong
+* Address              :   Guangzhou University(HEMC)
+
+******************************************************************************/
+
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
@@ -43,8 +56,8 @@ private:
 #define DEFALT 4
 
     QTimer mWavTimer_qt;
-    QPoint mPointStart_qp;
-    QPoint mPointEnd_qp;
+    QPoint mStartPoint_qp;
+    QPoint mEndPoint_qp;
     const int CAM_NO=0;
     bool mIsFirstWav_b=true;
     bool mIsDetection_b=false;
@@ -69,14 +82,14 @@ protected:
     void keyPressEvent(QKeyEvent *event);
 
 private slots:
-    void on_pushButton_clicked();
-    void on_pushButton_2_clicked();
-    void on_pushButton_3_clicked();
-    void on_Button_mIsDetection_b_clicked();
-    void on_Button_retangle_clicked();
-    void on_Button_circle_clicked();
-    void on_Button_polygon_clicked();
-    void on_DeletePoint_clicked();
+    void on_mOpenCamera_bt_clicked();
+    void on_mPauseCamera_bt_clicked();
+    void on_mStopCamera_bt_clicked();
+    void on_mDetection_bt_clicked();
+    void on_mRectangle_bt_clicked();
+    void on_mCircle_bt_clicked();
+    void on_mPolygon_bt_clicked();
+    void on_mDeletePoint_bt_clicked();
 };
 
 #endif // MAINWINDOW_H

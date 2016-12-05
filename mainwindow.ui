@@ -14,7 +14,7 @@
    <string>PreventJumping V1.0</string>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QPushButton" name="pushButton">
+   <widget class="QPushButton" name="mOpenCamera_bt">
     <property name="geometry">
      <rect>
       <x>750</x>
@@ -27,7 +27,7 @@
      <string>OpenCamera</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_2">
+   <widget class="QPushButton" name="mPauseCamera_bt">
     <property name="enabled">
      <bool>false</bool>
     </property>
@@ -43,7 +43,7 @@
      <string>PauseCamera</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="pushButton_3">
+   <widget class="QPushButton" name="mStopCamera_bt">
     <property name="enabled">
      <bool>false</bool>
     </property>
@@ -91,7 +91,7 @@
      <set>Qt::AlignCenter</set>
     </property>
    </widget>
-   <widget class="QPushButton" name="Button_decetion">
+   <widget class="QPushButton" name="mDetection_bt">
     <property name="enabled">
      <bool>false</bool>
     </property>
@@ -107,7 +107,7 @@
      <string>StartDetection</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Button_retangle">
+   <widget class="QPushButton" name="mRectangle_bt">
     <property name="enabled">
      <bool>false</bool>
     </property>
@@ -123,7 +123,7 @@
      <string>retangle</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Button_circle">
+   <widget class="QPushButton" name="mCircle_bt">
     <property name="enabled">
      <bool>false</bool>
     </property>
@@ -139,7 +139,7 @@
      <string>circle</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="Button_polygon">
+   <widget class="QPushButton" name="mPolygon_bt">
     <property name="enabled">
      <bool>false</bool>
     </property>
@@ -155,15 +155,15 @@
      <string>polygon</string>
     </property>
    </widget>
-   <widget class="QPushButton" name="DeletePoint">
+   <widget class="QPushButton" name="mDeletePoint_bt">
     <property name="enabled">
      <bool>false</bool>
     </property>
     <property name="geometry">
      <rect>
-      <x>770</x>
+      <x>769</x>
       <y>480</y>
-      <width>80</width>
+      <width>81</width>
       <height>20</height>
      </rect>
     </property>
@@ -231,15 +231,15 @@
     </property>
    </widget>
    <zorder>label_2</zorder>
-   <zorder>pushButton</zorder>
-   <zorder>pushButton_2</zorder>
-   <zorder>pushButton_3</zorder>
+   <zorder>mOpenCamera_bt</zorder>
+   <zorder>mPauseCamera_bt</zorder>
+   <zorder>mStopCamera_bt</zorder>
    <zorder>status</zorder>
-   <zorder>Button_decetion</zorder>
-   <zorder>Button_retangle</zorder>
-   <zorder>Button_circle</zorder>
-   <zorder>Button_polygon</zorder>
-   <zorder>DeletePoint</zorder>
+   <zorder>mDetection_bt</zorder>
+   <zorder>mRectangle_bt</zorder>
+   <zorder>mCircle_bt</zorder>
+   <zorder>mPolygon_bt</zorder>
+   <zorder>mDeletePoint_bt</zorder>
    <zorder>Alarming</zorder>
    <zorder>label</zorder>
   </widget>
