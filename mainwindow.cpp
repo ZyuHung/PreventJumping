@@ -25,15 +25,6 @@ bool gSortBySize_b(std::vector<cv::Point> &v1,std::vector<cv::Point> &v2)
     return v1.size()>v2.size();
 }
 
-//sort the 1dims vector "vector<cv::Point>" by their nums of points
-//把实际轮廓的坐标点按照在x升序的前提下y升序的方法进行排序以找出左上角及右下角坐标点进行画矩形框
-bool gSortByPoints_b(cv::Point &v1, cv::Point &v2)
-{
-    if (v1.x != v2.x)
-        return v1.x < v2.x;
-    else return v1.y < v2.y;
-}
-
 //Constructor function
 //构造函数
 MainWindow::MainWindow(QWidget *parent) :
@@ -112,6 +103,8 @@ void MainWindow::CloseCamera_v()
     ui->mPolygon_bt->setEnabled(false);//set "polygon" button disabled.
     ui->mCircle_bt->setEnabled(false);//set "circle" button disabled.
     ui->mDeletePoint_bt->setEnabled(false);//set "delete" button disabled.
+    ui->mAlarmSensitivity_sld->setEnabled(false);
+    ui->mRgnSensitivity_sld->setEnabled(false);
     mCapture_VC.release();
 }
 
@@ -282,7 +275,7 @@ void MainWindow::ProcessImage_v()
     forContours.zeros(mCamImage_M.rows,mCamImage_M.cols,CV_8UC3);
     mMask_M.copyTo(forContours);
     cv::findContours(forContours,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-//    cv::drawContours(mCamImage_M,contours,-1,cv::Scalar(0,255,0),3);//描绘轮廓
+//    cv::drawContours(mCamImage_M,contours,-1,cv::Scalar(0,255,0),1);//描绘轮廓
 
     //起始点
     cv::Point mClickPoint_P=cv::Point(gDetectionRange_R.x,gDetectionRange_R.y);
@@ -290,29 +283,45 @@ void MainWindow::ProcessImage_v()
     {
         //取点数最多的轮廓的一组坐标点后再取左上及右下坐标点
         std::sort(contours.begin(),contours.end(),gSortBySize_b);
-        for (std::vector<std::vector<cv::Point>>::iterator it = contours.begin(); it != contours.end(); ++it)
-            std::sort(it->begin(), it->end(),gSortByPoints_b);
-        cv::rectangle(mCamImage_M,contours[0][0]+mClickPoint_P, *(contours[0].end()-1)+mClickPoint_P,
-                cv::Scalar(0,0,255),2);
-        //设定报警阈值（按照面积占比计算）
-        int thresold = gDetectionRange_R.height*gDetectionRange_R.width*0.10;
-        int square=(contours[0][contours[0].size()-1].x-contours[0][0].x)
-                *(contours[0][contours[0].size()-1].y-contours[0][0].y);
-        if (square>=thresold)
+
+        bool isStop=false;
+        int square_sum=0;
+
+        for (auto it=contours.begin();it!=contours.end() && !isStop;it++)
         {
-            SetAlarm_v(true);
+            if (it->size()>=mIdentification_uc)
+            {
+                cv::RotatedRect rotrect=cv::minAreaRect(*it);
+                cv::Rect boundingbox=rotrect.boundingRect()+mClickPoint_P;
+
+                if (boundingbox.x+boundingbox.width>gDetectionRange_R.width+gDetectionRange_R.x)
+                    boundingbox.width=gDetectionRange_R.width+gDetectionRange_R.x-boundingbox.x;
+                if(boundingbox.x<gDetectionRange_R.x)
+                    boundingbox.x=gDetectionRange_R.x;
+                if(boundingbox.y+boundingbox.height>gDetectionRange_R.height+gDetectionRange_R.y)
+                    boundingbox.height=gDetectionRange_R.height+gDetectionRange_R.y-boundingbox.y;
+                if(boundingbox.y<gDetectionRange_R.y)
+                    boundingbox.y=gDetectionRange_R.y;
+
+                cv::rectangle(mCamImage_M,boundingbox,cv::Scalar(255,0,0),3);
+
+                square_sum+=boundingbox.width*boundingbox.height;
+            }
+            else
+            {
+                isStop=true;
+            }
         }
-        else
-        {
-            SetAlarm_v(false);
-        }
+
+        //设定报警阈值（按照面积占比计算） 
+        square_sum>=(gDetectionRange_R.height*gDetectionRange_R.width*mAlarmSen_f)?
+                    SetAlarm_v(true):SetAlarm_v(false);
     }
 
 }
 
 void MainWindow::Playwav_v()
 {
-//    QSound::play(":/alarm/alarming.wav");
     mIsFirstWav_b=true;
 }
 
@@ -547,12 +556,16 @@ void MainWindow::SetDetection_v(bool onoff)
     {
         mIsDetection_b=true;
         ui->mDetection_bt->setText(tr("StopDetection"));
+        ui->mAlarmSensitivity_sld->setEnabled(true);
+        ui->mRgnSensitivity_sld->setEnabled(true);
     }
     else
     {
         mIsDetection_b=false;
         ui->mDetection_bt->setText(tr("StartDetection"));
         SetAlarm_v(false);
+        ui->mAlarmSensitivity_sld->setEnabled(false);
+        ui->mRgnSensitivity_sld->setEnabled(false);
     }
 }
 
@@ -616,4 +629,14 @@ void MainWindow::on_mDeletePoint_bt_clicked()
     if (mRectType_i==POLYGON && !mIsPolyClosed_b && !mPolyPoints_v_P.empty())
         mPolyPoints_v_P.pop_back();
     }
+}
+
+void MainWindow::on_mRgnSensitivity_sld_valueChanged(int value)
+{
+    mIdentification_uc=value;
+}
+
+void MainWindow::on_mAlarmSensitivity_sld_valueChanged(int value)
+{
+    mAlarmSen_f=(float)value/100;
 }

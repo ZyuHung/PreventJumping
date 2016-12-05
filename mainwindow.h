@@ -72,6 +72,8 @@ private:
     cv::RotatedRect mRoRect_RR;
     std::vector<cv::Point> mPolyPoints_v_P;
     cv::Point mClickPoint_P;
+    std::size_t mIdentification_uc=230;
+    float mAlarmSen_f=0.1;
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -90,6 +92,8 @@ private slots:
     void on_mCircle_bt_clicked();
     void on_mPolygon_bt_clicked();
     void on_mDeletePoint_bt_clicked();
+    void on_mRgnSensitivity_sld_valueChanged(int value);
+    void on_mAlarmSensitivity_sld_valueChanged(int value);
 };
 
 #endif // MAINWINDOW_H
