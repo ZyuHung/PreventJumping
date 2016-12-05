@@ -104,7 +104,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>StartDecetion</string>
+     <string>StartDetection</string>
     </property>
    </widget>
    <widget class="QPushButton" name="Button_retangle">

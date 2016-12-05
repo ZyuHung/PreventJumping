@@ -4,6 +4,11 @@
 cv::Rect range;
 cv::BackgroundSubtractorMOG2 bgSubtractor;
 
+bool sortbysize(std::vector<cv::Point> &v1,std::vector<cv::Point> &v2)
+{
+    return v1.size()>v2.size();
+}
+
 bool sortbypoints(cv::Point &v1, cv::Point &v2)
 {
     if (v1.x != v2.x)
@@ -18,20 +23,21 @@ MainWindow::MainWindow(QWidget *parent) :
     qDebug()<<"MainWindow";
     ui->setupUi(this);
     ui->Alarming->setVisible(false);
-    connect(&timer,&QTimer::timeout,this,&MainWindow::UpdateImage);
-    connect(&wav_timer,&QTimer::timeout,this,&MainWindow::playwav);
+    setWindowFlags(windowFlags()& ~Qt::WindowMaximizeButtonHint);
+    connect(&mUpdatingTimer_qt,&QTimer::timeout,this,&MainWindow::UpdateImage_v);
+    connect(&mWavTimer_qt,&QTimer::timeout,this,&MainWindow::Playwav_v);
 }
 
 
-void MainWindow::showCamera()
+void MainWindow::ShowCamera_v()
 {
-    if (capture.open(CAM_NO))
+    if (mCapture_VC.open(CAM_NO))
     {
-        capture>>CamImg;
-        cv::cvtColor(CamImg,CamImg,CV_BGR2RGB);
+        mCapture_VC>>mCamImage_M;
+        cv::cvtColor(mCamImage_M,mCamImage_M,CV_BGR2RGB);
         ui->status->setText(tr("Camera open."));
-        timer.start(30);
-        isAction=true;
+        mUpdatingTimer_qt.start(30);
+        mIsAction_b=true;
         ui->pushButton->setEnabled(false);
         ui->pushButton_2->setEnabled(true);
         ui->pushButton_3->setEnabled(true);
@@ -46,31 +52,31 @@ void MainWindow::showCamera()
     }
 }
 
-void MainWindow::pauseCamera()
+void MainWindow::PauseCamera_v()
 {
     if (ui->pushButton_2->text()=="PauseCamera")
     {
         ui->pushButton_2->setText(tr("ContinueCamera"));
         ui->status->setText(tr("Pause"));
-        isAction=false;
-        timer.stop();
+        mIsAction_b=false;
+        mUpdatingTimer_qt.stop();
 
     }else
     {
-        timer.start(30);
-        isAction=true;
+        mUpdatingTimer_qt.start(30);
+        mIsAction_b=true;
         ui->pushButton_2->setText(tr("PauseCamera"));
         ui->status->setText(tr("Camera open."));
     }
 
 }
 
-void MainWindow::closeCamera()
+void MainWindow::CloseCamera_v()
 {
-    timer.stop();
-    setDetection(false);
-    rectType=DEFALT;
-    CamImg.release();
+    mUpdatingTimer_qt.stop();
+    SetDetection_v(false);
+    mRectType_i=DEFALT;
+    mCamImage_M.release();
     ui->status->setText(tr("Camera closed."));
     ui->pushButton->setEnabled(true);
     ui->pushButton_2->setEnabled(false);
@@ -80,206 +86,211 @@ void MainWindow::closeCamera()
     ui->Button_retangle->setEnabled(false);
     ui->Button_polygon->setEnabled(false);
     ui->Button_circle->setEnabled(false);
-    capture.release();
+    ui->DeletePoint->setEnabled(false);
+    mCapture_VC.release();
 }
 
 void MainWindow::paintEvent(QPaintEvent *event)
 {
-    QImage image2 = QImage((uchar*)(CamImg.data), CamImg.cols, CamImg.rows, QImage::Format_RGB888);
+    QImage image2 = QImage((uchar*)(mCamImage_M.data), mCamImage_M.cols, mCamImage_M.rows, QImage::Format_RGB888);
     ui->label->setPixmap(QPixmap::fromImage(image2));
     ui->label->resize(image2.size());
     ui->label->show();
+    setFixedSize(this->width(), this->height());
 }
 
-void MainWindow::UpdateImage()
+void MainWindow::UpdateImage_v()
 {
-    capture>>CamImg;
-    if (CamImg.data)
+    mCapture_VC>>mCamImage_M;
+    if (mCamImage_M.data)
     {
         ui->status->setText(tr("Camera open."));
 
-        switch (rectType)
+        switch (mRectType_i)
         {
         case RETANGLE:
         {
-            if (isPress) cv::rectangle(CamImg,
-                          cv::Point(m_pointStart.x(),m_pointStart.y()),
-                          cv::Point(m_pointEnd.x(),m_pointEnd.y()),
+            if (mIsPress_b) cv::rectangle(mCamImage_M,
+                          cv::Point(mPointStart_qp.x(),mPointStart_qp.y()),
+                          cv::Point(mPointEnd_qp.x(),mPointEnd_qp.y()),
                                        cv::Scalar(0,0,255),5);
-            int width=m_pointEnd.x()-m_pointStart.x();
-            int height=m_pointEnd.y()-m_pointStart.y();
-            range.x=width>0?m_pointStart.x():m_pointEnd.x();
-            range.y=height>0?m_pointStart.y():m_pointEnd.y();
-            range.width=abs(m_pointEnd.x()-m_pointStart.x());
-            range.height=abs(m_pointEnd.y()-m_pointStart.y());
+            int width=mPointEnd_qp.x()-mPointStart_qp.x();
+            int height=mPointEnd_qp.y()-mPointStart_qp.y();
+            range.x=width>0?mPointStart_qp.x():mPointEnd_qp.x();
+            range.y=height>0?mPointStart_qp.y():mPointEnd_qp.y();
+            range.width=abs(mPointEnd_qp.x()-mPointStart_qp.x());
+            range.height=abs(mPointEnd_qp.y()-mPointStart_qp.y());
             qDebug()<<range.x<<range.y<<range.width<<range.height;
             break;
         }
         case CIRCLE:
         {
-            int width=m_pointEnd.x()-m_pointStart.x();
-            int height=m_pointEnd.y()-m_pointStart.y();
-            range.x=width>0?m_pointStart.x():m_pointEnd.x();
-            range.y=height>0?m_pointStart.y():m_pointEnd.y();
+            int width=mPointEnd_qp.x()-mPointStart_qp.x();
+            int height=mPointEnd_qp.y()-mPointStart_qp.y();
+            range.x=width>0?mPointStart_qp.x():mPointEnd_qp.x();
+            range.y=height>0?mPointStart_qp.y():mPointEnd_qp.y();
 
-            range.width=abs(m_pointEnd.x()-m_pointStart.x());
-            range.height=abs(m_pointEnd.y()-m_pointStart.y());
+            range.width=abs(mPointEnd_qp.x()-mPointStart_qp.x());
+            range.height=abs(mPointEnd_qp.y()-mPointStart_qp.y());
 
-            roRect.center=cv::Point2f(range.x+range.width/2, range.y+range.height/2);
-            roRect.size=cv::Size2f(range.width, range.height);
-            roRect.angle=0;  //可放局部变量。（考虑减少一下全局变量的数量）
-            cv::ellipse(CamImg, roRect, cv::Scalar(0, 0, 255), 3);
+            mRoRect_RR.center=cv::Point2f(range.x+range.width/2, range.y+range.height/2);
+            mRoRect_RR.size=cv::Size2f(range.width, range.height);
+            mRoRect_RR.angle=0;  //可放局部变量。（考虑减少一下全局变量的数量）
+            cv::ellipse(mCamImage_M, mRoRect_RR, cv::Scalar(0, 0, 255), 3);
 
             break;
         }
         case POLYGON:
-            if (isPolyClosed && polyPoints.size()>=3)
+            if (mIsPolyClosed_b && mPolyPoints_v_P.size()>=3)
             {
-                int min_x=CamImg.rows,max_x=0,min_y=CamImg.cols,max_y=0;
-                for (auto i=polyPoints.begin();i!=polyPoints.end()-1;i++)
+                int min_x=mCamImage_M.rows,max_x=0,min_y=mCamImage_M.cols,max_y=0;
+                for (auto i=mPolyPoints_v_P.begin();i!=mPolyPoints_v_P.end()-1;i++)
                 {
                     min_x=(*i).x<min_x?(*i).x:min_x;
                     max_x=(*i).x>max_x?(*i).x:max_x;
                     min_y=(*i).y<min_y?(*i).y:min_y;
                     max_y=(*i).y>max_y?(*i).y:max_y;
 
-                    cv::line(CamImg,*i,*(i+1),cv::Scalar(0,0,255),3);
+                    cv::line(mCamImage_M,*i,*(i+1),cv::Scalar(0,0,255),3);
                 }
-                cv::line(CamImg,*(polyPoints.end()-1),polyPoints[0],cv::Scalar(0,0,255),3);
+                cv::line(mCamImage_M,*(mPolyPoints_v_P.end()-1),mPolyPoints_v_P[0],cv::Scalar(0,0,255),3);
                 range.x=min_x;
                 range.y=min_y;
                 range.width=max_x-min_x;
                 range.height=max_y-min_y;
             }
-            else if (polyPoints.size()&&polyPoints.size()>1)
+            else if (mPolyPoints_v_P.size()&&mPolyPoints_v_P.size()>1)
             {
-                isPolyClosed=false;
-                for (auto i=polyPoints.begin();i!=polyPoints.end()-1;i++)
+                mIsPolyClosed_b=false;
+                for (auto i=mPolyPoints_v_P.begin();i!=mPolyPoints_v_P.end()-1;i++)
                 {
-                    cv::line(CamImg,*i,*(i+1),cv::Scalar(0,0,255),3);
+                    cv::line(mCamImage_M,*i,*(i+1),cv::Scalar(0,0,255),3);
                 }
-            }else if(polyPoints.size()==1)
+            }else if(mPolyPoints_v_P.size()==1)
             {
-                isPolyClosed=false;
-                cv::circle(CamImg,polyPoints[0],1,cv::Scalar(0,0,255),3);
+                mIsPolyClosed_b=false;
+                cv::circle(mCamImage_M,mPolyPoints_v_P[0],1,cv::Scalar(0,0,255),3);
             }
             break;
         case DEFALT:
             range.x=0;
             range.y=0;
-            range.width=640;
-            range.height=300;
+            range.width=mCamImage_M.cols;
+            range.height=mCamImage_M.rows*0.5;
             break;
         }
 
-        if (decetion) ProcessImage();
-        cv::cvtColor(CamImg,CamImg,CV_BGR2RGB);
+        if (mIsDetection_b) ProcessImage_v();
+        cv::cvtColor(mCamImage_M,mCamImage_M,CV_BGR2RGB);
         this->update();
     }
     else
     {
-        closeCamera();
+        CloseCamera_v();
         ui->status->setText(tr("Camera lost."));
     }
 }
 
-void MainWindow::ProcessImage()
+void MainWindow::ProcessImage_v()
 {
     cv::Mat rect_range;
-    switch (rectType)
+    switch (mRectType_i)
     {
     case RETANGLE:
     {
-        rect_range=CamImg(range);
+        rect_range=mCamImage_M(range);
         break;
     }
     case CIRCLE:
     {
         cv::Mat circle_mask;
-        circle_mask = cv::Mat::zeros(CamImg.rows, CamImg.cols, CV_8UC1);
-        cv::ellipse(circle_mask, roRect, cv::Scalar(255, 255, 255), -1);
-        cv::bitwise_and(CamImg, CamImg, rect_range,circle_mask);
+        circle_mask = cv::Mat::zeros(mCamImage_M.rows, mCamImage_M.cols, CV_8UC1);
+        cv::ellipse(circle_mask, mRoRect_RR, cv::Scalar(255, 255, 255), -1);
+        cv::bitwise_and(mCamImage_M, mCamImage_M, rect_range,circle_mask);
         rect_range=rect_range(range);
         break;
     }
     case POLYGON:
     {
         cv::Mat polygon_mask;
-        polygon_mask=cv::Mat::zeros(CamImg.rows,CamImg.cols,CV_8UC1);
-        const cv::Point* ppt[1] = { &polyPoints[0] };
-        int npt[] = { polyPoints.size() };
+        polygon_mask=cv::Mat::zeros(mCamImage_M.rows,mCamImage_M.cols,CV_8UC1);
+        const cv::Point* ppt[1] = { &mPolyPoints_v_P[0] };
+        int npt[] = { mPolyPoints_v_P.size() };
         fillPoly(polygon_mask, ppt, npt, 1, cv::Scalar(255, 255, 255));
 
-        cv::bitwise_and(CamImg, CamImg, rect_range,polygon_mask);
+        cv::bitwise_and(mCamImage_M, mCamImage_M, rect_range,polygon_mask);
         rect_range=rect_range(range);
 
         break;
     }
     case DEFALT:
+        rect_range=mCamImage_M(range);
+        cv::rectangle(mCamImage_M,range,cv::Scalar(0,0,255),5);
         break;
 
     }
-    ForContour.zeros(CamImg.rows,CamImg.cols,CV_8UC3);
-    bgSubtractor(rect_range, mask, 0.00005);
+    bgSubtractor(rect_range, mMask_M, 0.00005);
 
-    threshold(mask, mask, 180, 255, CV_THRESH_BINARY);
+    threshold(mMask_M, mMask_M, 180, 255, CV_THRESH_BINARY);
 
-    cv::erode(mask, mask, cv::Mat());
-    cv::erode(mask, mask, cv::Mat());
-    cv::dilate(mask, mask, cv::Mat());
+    cv::erode(mMask_M, mMask_M, cv::Mat());
+    cv::erode(mMask_M, mMask_M, cv::Mat());
+    cv::dilate(mMask_M, mMask_M, cv::Mat());
 
-    mask.copyTo(ForContour);
+    cv::Mat forContours;
+    std::vector<std::vector<cv::Point>> contours;
+    forContours.zeros(mCamImage_M.rows,mCamImage_M.cols,CV_8UC3);
+    mMask_M.copyTo(forContours);
+    cv::findContours(forContours,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
+//    cv::drawContours(mCamImage_M,contours,-1,cv::Scalar(0,255,0),3);
 
-    cv::findContours(ForContour,contours,CV_RETR_EXTERNAL,CV_CHAIN_APPROX_NONE);
-    cv::drawContours(CamImg,contours,-1,cv::Scalar(0,255,0),3);
-
-    cv::Point tmp=cv::Point(range.x,range.y);
+    cv::Point mClickPoint_P=cv::Point(range.x,range.y);
     if (contours.size())
     {
+        std::sort(contours.begin(),contours.end(),sortbysize);
         for (std::vector<std::vector<cv::Point>>::iterator it = contours.begin(); it != contours.end(); ++it)
             std::sort(it->begin(), it->end(),sortbypoints);
-        cv::rectangle(CamImg,contours[0][0]+tmp, *(contours[0].end()-1)+tmp,cv::Scalar(0,0,255),2);
-//        cv::rectangle(CamImg,contours[0][0]+tmp, contours[0][contours[0].size()-1]+tmp,cv::Scalar(0,0,255),2);
+        cv::rectangle(mCamImage_M,contours[0][0]+mClickPoint_P, *(contours[0].end()-1)+mClickPoint_P,cv::Scalar(0,0,255),2);
 
-    int thresold = range.height*range.width*0.05;
+    int thresold = range.height*range.width*0.10;
     int square=(contours[0][contours[0].size()-1].x-contours[0][0].x)
             *(contours[0][contours[0].size()-1].y-contours[0][0].y);
     if (square>=thresold)
     {
-        setAlarm(true);
+        SetAlarm_v(true);
     }
     else
     {
-        setAlarm(false);
+        SetAlarm_v(false);
     }
     }
 
 }
 
-void MainWindow::playwav()
+void MainWindow::Playwav_v()
 {
 //    QSound::play(":/alarm/alarming.wav");
-    isFirstWav=true;
+    mIsFirstWav_b=true;
 }
 
-void MainWindow::setAlarm(bool isAlarm)
+void MainWindow::SetAlarm_v(bool isAlarm)
 {
     if (isAlarm)
     {
         ui->Alarming->setVisible(true);
 
-       if (isFirstWav)
+       if (mIsFirstWav_b)
        {
            QSound::play(":/alarm/alarming.wav");
-           wav_timer.start(2350);
-           isFirstWav=false;
+           mWavTimer_qt.start(2350);
+           mIsFirstWav_b=false;
        }
 
     }
     else
     {
         ui->Alarming->setVisible(false);
-//        wav_timer.stop();
+//        mWavTimer_qt.stop();
     }
 
 }
@@ -287,55 +298,55 @@ void MainWindow::setAlarm(bool isAlarm)
 
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {//考虑左右键press问题
-    if (isAction)
+    if (mIsAction_b)
     {
-    isPress=false;
-    switch (rectType)
+    mIsPress_b=false;
+    switch (mRectType_i)
     {
     case RETANGLE:
     case CIRCLE:
-        setDetection(false);
+        SetDetection_v(false);
         if (event->x()-ui->label->x()>=ui->label->width())
-            m_pointStart.setX(ui->label->x()+ui->label->width()-15);
+            mPointStart_qp.setX(ui->label->x()+ui->label->width()-15);
         else if(event->x()<ui->label->x())
-            m_pointStart.setX(ui->label->x()-7);
+            mPointStart_qp.setX(ui->label->x()-7);
             else
-            m_pointStart.setX(event->x()-ui->label->x());
+            mPointStart_qp.setX(event->x()-ui->label->x());
 
         if(event->y()-ui->label->y()>=ui->label->height())
-            m_pointStart.setY(ui->label->y()+ui->label->height()-15);
+            mPointStart_qp.setY(ui->label->y()+ui->label->height()-15);
         else if(event->y()<ui->label->y())
-            m_pointStart.setY(ui->label->y()-7);
+            mPointStart_qp.setY(ui->label->y()-7);
         else
-            m_pointStart.setY(event->y()-ui->label->y());
-        m_pointEnd=m_pointStart;
-        isPress=true;
+            mPointStart_qp.setY(event->y()-ui->label->y());
+        mPointEnd_qp=mPointStart_qp;
+        mIsPress_b=true;
         break;
     case POLYGON:
         {
-        if (isPolyClosed)
+        if (mIsPolyClosed_b)
         {
-            setDetection(false);
-            isPolyClosed=false;
-            polyPoints.clear();
+            SetDetection_v(false);
+            mIsPolyClosed_b=false;
+            mPolyPoints_v_P.clear();
         }
 
 
         if (event->x()-ui->label->x()>=ui->label->width())
-            tmp.x=ui->label->x()+ui->label->width()-15;
+            mClickPoint_P.x=ui->label->x()+ui->label->width()-15;
         else if(event->x()<ui->label->x())
-            tmp.x=ui->label->x()-7;
+            mClickPoint_P.x=ui->label->x()-7;
             else
-            tmp.x=event->x()-ui->label->x();
+            mClickPoint_P.x=event->x()-ui->label->x();
 
         if(event->y()-ui->label->y()>=ui->label->height())
-           tmp.y=ui->label->y()+ui->label->height()-15;
+           mClickPoint_P.y=ui->label->y()+ui->label->height()-15;
         else if(event->y()<ui->label->y())
-            tmp.y=ui->label->y()-7;
+            mClickPoint_P.y=ui->label->y()-7;
         else
-            tmp.y=event->y()-ui->label->y();
+            mClickPoint_P.y=event->y()-ui->label->y();
 
-        isPress=true;
+        mIsPress_b=true;
 
 
         break;
@@ -344,32 +355,32 @@ void MainWindow::mousePressEvent(QMouseEvent *event)
         break;
     }
 
-    qDebug()<<"mousePress"<<m_pointStart;
+    qDebug()<<"mousePress"<<mPointStart_qp;
     }
 }
 
 void MainWindow::mouseMoveEvent(QMouseEvent *event)
 {
-    if (isAction)
+    if (mIsAction_b)
     {
-    switch (rectType)
+    switch (mRectType_i)
     {
     case RETANGLE:
     case CIRCLE:
         //get QPoint->opencvPoint && not out of bounding.
         if (event->x()-ui->label->x()>=ui->label->width())
-            m_pointEnd.setX(ui->label->x()+ui->label->width()-15);
+            mPointEnd_qp.setX(ui->label->x()+ui->label->width()-15);
         else if(event->x()<ui->label->x())
-            m_pointEnd.setX(ui->label->x()-7);
+            mPointEnd_qp.setX(ui->label->x()-7);
         else
-            m_pointEnd.setX(event->x()-ui->label->x());
+            mPointEnd_qp.setX(event->x()-ui->label->x());
 
         if(event->y()-ui->label->y()>=ui->label->height())
-            m_pointEnd.setY(ui->label->y()+ui->label->height()-15);
+            mPointEnd_qp.setY(ui->label->y()+ui->label->height()-15);
         else if(event->y()<ui->label->y())
-            m_pointEnd.setY(ui->label->y()-7);
+            mPointEnd_qp.setY(ui->label->y()-7);
         else
-            m_pointEnd.setY(event->y()-ui->label->y());
+            mPointEnd_qp.setY(event->y()-ui->label->y());
         break;
 
     case POLYGON:
@@ -384,41 +395,44 @@ void MainWindow::mouseMoveEvent(QMouseEvent *event)
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    if (isAction)
+    if (mIsAction_b)
     {
 
-    switch (rectType)
+    switch (mRectType_i)
     {
     case RETANGLE:
     case CIRCLE:
-        setDetection(true);
+        SetDetection_v(true);
         break;
     case POLYGON:
+    {
+        cv::Point lastClickPoint;
         if (event->x()-ui->label->x()>=ui->label->width())
-            lineEndPoint.x=ui->label->x()+ui->label->width()-15;
+            lastClickPoint.x=ui->label->x()+ui->label->width()-15;
         else if(event->x()<ui->label->x())
-            lineEndPoint.x=ui->label->x()-7;
+            lastClickPoint.x=ui->label->x()-7;
         else
-            lineEndPoint.x=event->x()-ui->label->x();
+            lastClickPoint.x=event->x()-ui->label->x();
 
         if(event->y()-ui->label->y()>=ui->label->height())
-            lineEndPoint.y=ui->label->y()+ui->label->height()-15;
+            lastClickPoint.y=ui->label->y()+ui->label->height()-15;
         else if(event->y()<ui->label->y())
-            lineEndPoint.y=ui->label->y()-7;
+            lastClickPoint.y=ui->label->y()-7;
         else
-            lineEndPoint.y=event->y()-ui->label->y();
+            lastClickPoint.y=event->y()-ui->label->y();
         //自动闭合(auto closed)
-        if (polyPoints.size()>2 &&
-                abs(lineEndPoint.x-polyPoints[0].x)<=20 && abs(lineEndPoint.y-polyPoints[0].y)<=20)
+        if (mPolyPoints_v_P.size()>2 &&
+                abs(lastClickPoint.x-mPolyPoints_v_P[0].x)<=20 && abs(lastClickPoint.y-mPolyPoints_v_P[0].y)<=20)
         {
-           polyPoints.push_back(tmp);
-           isPolyClosed=true;
+           mPolyPoints_v_P.push_back(mClickPoint_P);
+           mIsPolyClosed_b=true;
 
-           setDetection(true);
+           SetDetection_v(true);
         }
-        if (isPress && !isPolyClosed) polyPoints.push_back(tmp);
+        if (mIsPress_b && !mIsPolyClosed_b) mPolyPoints_v_P.push_back(mClickPoint_P);
 
         break;
+    }
     case DEFALT:
         break;
     }
@@ -427,26 +441,27 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 
 void MainWindow::mouseDoubleClickEvent(QMouseEvent *event)
 {
-    if (isAction)
+    if (mIsAction_b)
     {
     qDebug()<<"DoubleClick";
-    if (rectType==POLYGON)
+    if (mRectType_i==POLYGON && mPolyPoints_v_P.size()>2)
     {
-        polyPoints.push_back(tmp);
-        isPolyClosed=true;
+        mPolyPoints_v_P.push_back(mClickPoint_P);
+        mIsPolyClosed_b=true;
+        SetDetection_v(true);
     }
-    setDetection(true);
+
     }
 }
 
 void MainWindow::keyPressEvent(QKeyEvent *event)
 {
-    if (isAction)
+    if (mIsAction_b)
     {
     if (event->key()==Qt::Key_Delete)
     {
-        if (rectType==POLYGON && !isPolyClosed && !polyPoints.empty())
-            polyPoints.pop_back();
+        if (mRectType_i==POLYGON && !mIsPolyClosed_b && !mPolyPoints_v_P.empty())
+            mPolyPoints_v_P.pop_back();
     }
     }
 }
@@ -459,107 +474,107 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_pushButton_clicked()
 {
-    showCamera();
+    ShowCamera_v();
 }
 
 void MainWindow::on_pushButton_2_clicked()
 {
-    pauseCamera();
+    PauseCamera_v();
 }
 
 void MainWindow::on_pushButton_3_clicked()
 {
-    closeCamera();
+    CloseCamera_v();
 }
 
-void MainWindow::on_Button_decetion_clicked()
+void MainWindow::on_Button_mIsDetection_b_clicked()
 {
     if (ui->Button_decetion->text()=="StartDetection")
     {
-        setDetection(true);
+        SetDetection_v(true);
     }
     else
     {
-        setDetection(false);
+        SetDetection_v(false);
     }
 }
 
-void MainWindow::setDetection(bool onoff)
+void MainWindow::SetDetection_v(bool onoff)
 {
-    if (onoff)
+    if (onoff && range.width && range.height)
     {
-        decetion=true;
+        mIsDetection_b=true;
         ui->Button_decetion->setText(tr("StopDetection"));
     }
     else
     {
-        decetion=false;
+        mIsDetection_b=false;
         ui->Button_decetion->setText(tr("StartDetection"));
-        setAlarm(false);
+        SetAlarm_v(false);
     }
 }
 
 void MainWindow::on_Button_retangle_clicked()
 {
-    if (isAction)
+    if (mIsAction_b)
     {
-    if (rectType!=RETANGLE)
+    if (mRectType_i!=RETANGLE)
     {
-        m_pointStart.setX(0);
-        m_pointStart.setY(0);
-        m_pointEnd.setX(0);
-        m_pointEnd.setY(0);
-        setDetection(false);
+        mPointStart_qp.setX(0);
+        mPointStart_qp.setY(0);
+        mPointEnd_qp.setX(0);
+        mPointEnd_qp.setY(0);
+        SetDetection_v(false);
     }
     ui->DeletePoint->setEnabled(false);
-    rectType=RETANGLE;
+    mRectType_i=RETANGLE;
     }
 }
 
 void MainWindow::on_Button_circle_clicked()
 {
-    if (isAction)
+    if (mIsAction_b)
     {
-    if (rectType!=CIRCLE)
+    if (mRectType_i!=CIRCLE)
     {
-        m_pointStart.setX(0);
-        m_pointStart.setY(0);
-        m_pointEnd.setX(0);
-        m_pointEnd.setY(0);
-        setDetection(false);
+        mPointStart_qp.setX(0);
+        mPointStart_qp.setY(0);
+        mPointEnd_qp.setX(0);
+        mPointEnd_qp.setY(0);
+        SetDetection_v(false);
     }
     ui->DeletePoint->setEnabled(false);
-    rectType=CIRCLE;
+    mRectType_i=CIRCLE;
     }
 }
 
 void MainWindow::on_Button_polygon_clicked()
 {
-    if (isAction)
+    if (mIsAction_b)
     {
-    if (rectType!=POLYGON)
+    if (mRectType_i!=POLYGON)
     {
 
-        m_pointStart.setX(0);
-        m_pointStart.setY(0);
-        m_pointEnd.setX(0);
-        m_pointEnd.setY(0);
+        mPointStart_qp.setX(0);
+        mPointStart_qp.setY(0);
+        mPointEnd_qp.setX(0);
+        mPointEnd_qp.setY(0);
 
     }
-    setDetection(false);
-    isPolyClosed=false;
-    polyPoints.clear();
+    SetDetection_v(false);
+    mIsPolyClosed_b=false;
+    mPolyPoints_v_P.clear();
     ui->DeletePoint->setEnabled(true);
-    rectType=POLYGON;
+    mRectType_i=POLYGON;
 }
 }
 
 void MainWindow::on_DeletePoint_clicked()
 {
-    if (isAction)
+    if (mIsAction_b)
     {
-    if (rectType==POLYGON && !isPolyClosed && !polyPoints.empty())
-        polyPoints.pop_back();
+    if (mRectType_i==POLYGON && !mIsPolyClosed_b && !mPolyPoints_v_P.empty())
+        mPolyPoints_v_P.pop_back();
     }
 }
 

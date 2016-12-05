@@ -24,16 +24,15 @@ class MainWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    void showCamera();
-    void pauseCamera();
-    void closeCamera();
-    void UpdateImage();
-    void ProcessImage();
-    void setDetection(bool onoff);
-    void setRect(const QPoint &start, const QPoint &end);
-    void setAlarm(bool isAlarm);
-    void playwav();
-//    bool sortbypoints(cv::Point &v1, cv::Point &v2);
+    void ShowCamera_v();
+    void PauseCamera_v();
+    void CloseCamera_v();
+    void UpdateImage_v();
+    void ProcessImage_v();
+    void SetDetection_v(bool onoff);
+    void SetRect_v(const QPoint &start, const QPoint &end);
+    void SetAlarm_v(bool isAlarm);
+    void Playwav_v();
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
@@ -43,25 +42,23 @@ private:
 #define POLYGON 3
 #define DEFALT 4
 
-    QTimer wav_timer;
-    QPoint m_pointStart;
-    QPoint m_pointEnd;
+    QTimer mWavTimer_qt;
+    QPoint mPointStart_qp;
+    QPoint mPointEnd_qp;
     const int CAM_NO=0;
-    bool isFirstWav=true;
-    bool decetion=false;
-    bool isPress=false;
-    bool isPolyClosed=false;
-    bool isAction=true;
-    int rectType=DEFALT;
-    QTimer timer;
-    cv::Mat CamImg,mask,ForContour;
-    cv::VideoCapture capture;
+    bool mIsFirstWav_b=true;
+    bool mIsDetection_b=false;
+    bool mIsPress_b=false;
+    bool mIsPolyClosed_b=false;
+    bool mIsAction_b=true;
+    int mRectType_i=DEFALT;
+    QTimer mUpdatingTimer_qt;
+    cv::Mat mCamImage_M,mMask_M;
+    cv::VideoCapture mCapture_VC;
     Ui::MainWindow *ui;
-    cv::RotatedRect roRect;
-    std::vector<cv::Point> polyPoints;
-    std::vector<std::vector<cv::Point>> contours;
-    cv::Point tmp;
-    cv::Point lineEndPoint;
+    cv::RotatedRect mRoRect_RR;
+    std::vector<cv::Point> mPolyPoints_v_P;
+    cv::Point mClickPoint_P;
 
 protected:
     void paintEvent(QPaintEvent *event);
@@ -75,7 +72,7 @@ private slots:
     void on_pushButton_clicked();
     void on_pushButton_2_clicked();
     void on_pushButton_3_clicked();
-    void on_Button_decetion_clicked();
+    void on_Button_mIsDetection_b_clicked();
     void on_Button_retangle_clicked();
     void on_Button_circle_clicked();
     void on_Button_polygon_clicked();
