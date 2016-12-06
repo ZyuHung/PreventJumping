@@ -278,10 +278,10 @@ void MainWindow::ProcessImage_v()
 //    cv::drawContours(mCamImage_M,contours,-1,cv::Scalar(0,255,0),1);//描绘轮廓
 
     //起始点
-    cv::Point mClickPoint_P=cv::Point(gDetectionRange_R.x,gDetectionRange_R.y);
+    cv::Point DetectionStart_P=cv::Point(gDetectionRange_R.x,gDetectionRange_R.y);
     if (contours.size())
     {
-        //取点数最多的轮廓的一组坐标点后再取左上及右下坐标点
+        //按照坐标数进行降序
         std::sort(contours.begin(),contours.end(),gSortBySize_b);
 
         bool isStop=false;
@@ -291,9 +291,10 @@ void MainWindow::ProcessImage_v()
         {
             if (it->size()>=mIdentification_uc)
             {
-                cv::RotatedRect rotrect=cv::minAreaRect(*it);
-                cv::Rect boundingbox=rotrect.boundingRect()+mClickPoint_P;
+                cv::RotatedRect rotrect=cv::minAreaRect(*it);//使用minAreaRect获得最小外接矩形框的最小外接0°矩形框
+                cv::Rect boundingbox=rotrect.boundingRect()+DetectionStart_P;
 
+                //判断外接矩形框（boundingbox）是否越界
                 if (boundingbox.x+boundingbox.width>gDetectionRange_R.width+gDetectionRange_R.x)
                     boundingbox.width=gDetectionRange_R.width+gDetectionRange_R.x-boundingbox.x;
                 if(boundingbox.x<gDetectionRange_R.x)
@@ -305,7 +306,7 @@ void MainWindow::ProcessImage_v()
 
                 cv::rectangle(mCamImage_M,boundingbox,cv::Scalar(255,0,0),3);
 
-                square_sum+=boundingbox.width*boundingbox.height;
+                square_sum+=boundingbox.width*boundingbox.height;//面积累加
             }
             else
             {
@@ -349,7 +350,7 @@ void MainWindow::SetAlarm_v(bool isAlarm)
 //鼠标点击事件
 void MainWindow::mousePressEvent(QMouseEvent *event)
 {
-    if (mIsAction_b/*考虑左右键press问题*/)
+    if (mIsAction_b)
     {
         mIsPress_b=false;
         switch (mRectType_i)
@@ -459,24 +460,10 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *event)
         break;
         case POLYGON:
         {
-            cv::Point lastClickPoint;//lastclickpoint and mClickPoint_P ? 考虑一次push两个？
-            //坐标点范围检测及坐标转换
-            if (event->x()-ui->label->x()>=ui->label->width())
-                lastClickPoint.x=ui->label->x()+ui->label->width()-15;
-            else if(event->x()<ui->label->x())
-                lastClickPoint.x=ui->label->x()-7;
-            else
-                lastClickPoint.x=event->x()-ui->label->x();
-            if(event->y()-ui->label->y()>=ui->label->height())
-                lastClickPoint.y=ui->label->y()+ui->label->height()-15;
-            else if(event->y()<ui->label->y())
-                lastClickPoint.y=ui->label->y()-7;
-            else
-                lastClickPoint.y=event->y()-ui->label->y();
-            //自动闭合(auto closed)
+//            //自动闭合(auto closed)
             if (mPolyPoints_v_P.size()>2 &&
-                    abs(lastClickPoint.x-mPolyPoints_v_P[0].x)<=20 &&
-                    abs(lastClickPoint.y-mPolyPoints_v_P[0].y)<=20)
+                    abs(mClickPoint_P.x-mPolyPoints_v_P[0].x)<=20 &&
+                    abs(mClickPoint_P.y-mPolyPoints_v_P[0].y)<=20)
             {
                 mPolyPoints_v_P.push_back(mClickPoint_P);
                 mIsPolyClosed_b=true;

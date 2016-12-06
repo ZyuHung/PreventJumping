@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2016-11-25T20:36:32
+# Project created by QtCreator 2016-12-06T17:00:25
 #
 #-------------------------------------------------
 
@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = OpenCVTest4
+TARGET = PreventJumping
 TEMPLATE = app
 
 
